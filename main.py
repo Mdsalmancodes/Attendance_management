@@ -26,6 +26,20 @@ def signup():
 def login():
     return render_template("login.html")
 
+@app.route("/signup",methods=["POST","GET"])
+def signup():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user=User(name=name,email=email,password=password)
+        db.session.add(user)
+        db.session.commit()
+        return render_template("Login.html")
+
+        
+    return render_template("Signup.html")
+
 
 if __name__ == "__main__":
       app.run(debug=True,host="0.0.0.0",port=5000)
