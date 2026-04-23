@@ -1,17 +1,24 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 from models import User, db
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False    
-
-session = {}
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'your-secret-key-change-this'
 
 db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+
+@app.context_processor
+def inject_user():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    return dict(user=user)
 
 
 @app.route("/")
@@ -31,8 +38,8 @@ def login():
         password = request.form.get("password")
         user=User.query.filter_by(email=email,password=password).first()
         if user:
-            session["user_id"]=user
-            return render_template("home.html",user=user)
+            session["user_id"]=user.id
+            return redirect(url_for('hello_world'))
         else:
             return render_template("login.html")
     return render_template("login.html")
@@ -58,10 +65,10 @@ def signup():
 
     return render_template("signup.html")
 
-@app.route("/logout/<int:user_id>")
-def logout(user_id):
-    session.pop(user_id,None)
-    return render_template("home.html",user=None)
+@app.route("/logout")
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('hello_world'))
 
 
 if __name__ == "__main__":
